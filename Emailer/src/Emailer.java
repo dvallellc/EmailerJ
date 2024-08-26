@@ -16,6 +16,13 @@ public class Emailer{
     private Authenticator _authenticator;
     private Properties _properties;
 
+    /**
+     *
+     * @param smtpServer
+     * @param smtpPort
+     * @param username
+     * @param password
+     */
     public Emailer(String smtpServer, int smtpPort, String username, String password)
     {
         _smtpServer = smtpServer;
@@ -43,9 +50,19 @@ public class Emailer{
             }
         };
     }
+
+    /**
+     *
+     * @param configPath
+     */
     public Emailer(String configPath){
         ReadConfigFile(configPath);
     }
+
+    /**
+     *
+     * @param configPath
+     */
     private void ReadConfigFile(String configPath){
         try (Scanner scanner = new Scanner(new File(configPath))) {
             _smtpServer = scanner.nextLine();
@@ -57,27 +74,56 @@ public class Emailer{
             e.printStackTrace();
         }
     }
+
+    /**
+     *
+     * @param recipients
+     * @param subject
+     * @param messageText
+     * @param from
+     */
+    public void SendMail(ArrayList<String> recipients, String subject, String messageText, String from){
+        StringBuilder recipientsString = new StringBuilder();
+        for(int i = 0; i < recipients.size(); i++){
+            if(i > 0){
+                recipientsString.append(",");
+            }
+            recipientsString.append(recipients.get(i));
+        }
+        SendMail(recipientsString.toString(), subject, messageText, from);
+    }
+
+    /**
+     *
+     * @param recipients
+     * @param subject
+     * @param messageText
+     * @param from
+     */
     public void SendMail(String recipients, String subject,
-                         String messageText , String from) throws MessagingException {
+                         String messageText , String from) {
+        try{
+            Session session = Session.getDefaultInstance(_properties, _authenticator);
+            session.setDebug(false);
 
-        Session session = Session.getDefaultInstance(_properties, _authenticator);
-        session.setDebug(false);
+            Message message = new MimeMessage(session);
+            message.setFrom(_sender);
+            message.setRecipients(
+                    Message.RecipientType.TO, InternetAddress.parse(recipients));
+            message.setSubject(subject);
 
-        Message message = new MimeMessage(session);
-        message.setFrom(_sender);
-        message.setRecipients(
-                Message.RecipientType.TO, InternetAddress.parse(recipients));
-        message.setSubject(subject);
+            MimeBodyPart mimeBodyPart = new MimeBodyPart();
+            mimeBodyPart.setContent(messageText, "text/html; charset=utf-8");
 
-        MimeBodyPart mimeBodyPart = new MimeBodyPart();
-        mimeBodyPart.setContent(messageText, "text/html; charset=utf-8");
+            Multipart multipart = new MimeMultipart();
+            multipart.addBodyPart(mimeBodyPart);
 
-        Multipart multipart = new MimeMultipart();
-        multipart.addBodyPart(mimeBodyPart);
+            message.setContent(multipart);
 
-        message.setContent(multipart);
-
-        Transport.send(message);
+            Transport.send(message);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }
