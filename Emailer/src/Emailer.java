@@ -1,6 +1,6 @@
+import java.util.*;
 import javax.mail.*;
 import javax.mail.internet.*;
-import java.util.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Scanner;
@@ -10,20 +10,33 @@ public class Emailer{
     private String _smtpServer;
     private String _username;
     private String _password;
+
+    private int _smtpPort;
+    private InternetAddress _sender;
     private Authenticator _authenticator;
     private Properties _properties;
 
-    public Emailer(String smtpServer, String username, String password)
+    public Emailer(String smtpServer, int smtpPort, String username, String password)
     {
         _smtpServer = smtpServer;
+        _smtpPort = smtpPort;
         _username = username;
         _password = password;
 
         InstantiateAuthenticator();
     }
     private void InstantiateAuthenticator(){
+        try{
+            _sender = new InternetAddress(_username);
+        }
+        catch(Exception e) {
+            e.printStackTrace();
+        }
         _properties = new Properties();
+        _properties.put("mail.smtp.auth", true);
+        _properties.put("mail.smtp.starttls.enable", "true");
         _properties.put("mail.smtp.host", _smtpServer);
+        _properties.put("mail.smtp.port", _smtpPort);
         _authenticator = new Authenticator(){
             protected PasswordAuthentication getPasswordAuthentication(){
                 return new PasswordAuthentication(_username, _password);
@@ -36,6 +49,7 @@ public class Emailer{
     private void ReadConfigFile(String configPath){
         try (Scanner scanner = new Scanner(new File(configPath))) {
             _smtpServer = scanner.nextLine();
+            _smtpPort = Integer.parseInt(scanner.nextLine());
             _username = scanner.nextLine();
             _password = scanner.nextLine();
             InstantiateAuthenticator();
@@ -43,35 +57,27 @@ public class Emailer{
             e.printStackTrace();
         }
     }
-    public void SendMail(String recipients[], String subject,
-                         String message , String from) throws MessagingException {
-
-        //Set the host smtp addres
-
-        // create some properties and get the default Session
+    public void SendMail(String recipients, String subject,
+                         String messageText , String from) throws MessagingException {
 
         Session session = Session.getDefaultInstance(_properties, _authenticator);
         session.setDebug(false);
 
-        // create a message
+        Message message = new MimeMessage(session);
+        message.setFrom(_sender);
+        message.setRecipients(
+                Message.RecipientType.TO, InternetAddress.parse(recipients));
+        message.setSubject(subject);
 
-        Message msg = new MimeMessage(session);
+        MimeBodyPart mimeBodyPart = new MimeBodyPart();
+        mimeBodyPart.setContent(messageText, "text/html; charset=utf-8");
 
-        // set the from and to address
-        InternetAddress addressFrom = new InternetAddress(from);
-        msg.setFrom(addressFrom);
+        Multipart multipart = new MimeMultipart();
+        multipart.addBodyPart(mimeBodyPart);
 
-        InternetAddress[] addressTo = new InternetAddress[recipients.length];
-        for (int i = 0; i < recipients.length; i++) {
-            addressTo[i] = new InternetAddress(recipients[i]);
-        }
-        msg.setRecipients(Message.RecipientType.TO, addressTo);
+        message.setContent(multipart);
 
-
-        // Setting the Subject and Content Type
-        msg.setSubject(subject);
-        msg.setContent(message, "text/plain");
-        Transport.send(msg);
+        Transport.send(message);
     }
 
 }
