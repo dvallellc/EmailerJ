@@ -1,0 +1,13 @@
+<component name="ArtifactManager">
+  <artifact type="jar" build-on-make="true" name="EmailerJ">
+    <output-path>$PROJECT_DIR$/out/</output-path>
+    <root id="archive" name="EmailerJ.jar">
+      <element id="directory" name="META-INF">
+        <element id="file-copy" path="$PROJECT_DIR$/out/production/EmailerJ/META-INF/MANIFEST.MF" />
+      </element>
+      <element id="library" level="project" name="javax.mail" />
+      <element id="file-copy" path="$PROJECT_DIR$/out/production/EmailerJ/Emailer.class" />
+      <element id="file-copy" path="$PROJECT_DIR$/out/production/EmailerJ/Main.class" />
+    </root>
+  </artifact>
+</component>

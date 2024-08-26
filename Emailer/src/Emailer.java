@@ -18,11 +18,11 @@ public class Emailer{
         _smtpServer = smtpServer;
         _username = username;
         _password = password;
-        _properties = new Properties();
 
         InstantiateAuthenticator();
     }
     private void InstantiateAuthenticator(){
+        _properties = new Properties();
         _properties.put("mail.smtp.host", _smtpServer);
         _authenticator = new Authenticator(){
             protected PasswordAuthentication getPasswordAuthentication(){
@@ -43,7 +43,7 @@ public class Emailer{
             e.printStackTrace();
         }
     }
-    public void postMail(String recipients[], String subject,
+    public void SendMail(String recipients[], String subject,
                          String message , String from) throws MessagingException {
 
         //Set the host smtp addres
@@ -67,8 +67,6 @@ public class Emailer{
         }
         msg.setRecipients(Message.RecipientType.TO, addressTo);
 
-        // Optional : You can also set your custom headers in the Email if you Want
-        msg.addHeader("MyHeaderName", "myHeaderValue");
 
         // Setting the Subject and Content Type
         msg.setSubject(subject);
